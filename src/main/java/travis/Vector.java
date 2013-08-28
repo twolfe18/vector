@@ -1,6 +1,7 @@
 package travis;
 
 import java.util.Arrays;
+import java.util.TreeMap;
 
 /**
  * The one true vector!
@@ -104,17 +105,67 @@ public class Vector {
 	 */
 	private int findIndexMatching(int tag, int index) {		assert isSparse();
 		// oh noes! implement my own binary search????
-		throw new RuntimeException("implement me");
+		// thanks java!
+		compact();
+		return findIndexMatching(tag, index, 0, top-1);
 	}
+	
+	// TODO test this!
+	private int findIndexMatching(int tag, int index, int imin, int imax) {
+		long needle = pack(tag, index);
+		while(imin < imax) {
+			int imid = (imax - imin) / 2 + imin; assert(imid < imax);
+			long mid = pack(tags == null ? 0 : tags[imid], idx[imid]);
+			if(mid < needle)
+				imin = imid + 1;
+			else
+				imax = imid;
+		}
+		if(imax == imin) {
+			long found = pack(tags == null ? 0 : tags[imin], idx[imin]);
+			if(found == needle) return imin;
+		}
+		return -1;
+	}
+	
+	private long pack(int tag, int index) { return ((long)tag << 32) | index; }
+	private int unpackTag(long key) { return (int)(key >>> 32); }
+	private int unpackIndex(long key) { return (int)(key & ((1<<32)-1)); }
 	
 	/**
 	 * sort indices and consolidate duplicate entries (only for sparse vectors)
+	 * @param freeExtraMem will allocate new arrays as small as possible to store tags/indices/values
 	 */
-	private void compact() {								assert isSparse();
-		// TODO keep max index and use an array to do this? (as opposed to a HashMap)
+	private void compact(boolean freeExtraMem) {			assert isSparse();
 		// TODO keep a flag for if has been compacted
-		throw new RuntimeException("implement me");
+		// TODO special case for no-tags && small-biggest-key => use array instead of treemap?
+		TreeMap<Long, Double> sorted = new TreeMap<Long, Double>();
+		for(int i=0; i<top; i++) {
+			int tag = tags == null ? 0 : tags[i];
+			long key = pack(tag, idx[i]);
+			Double old = sorted.get(key);
+			if(old == null) old = 0d;
+			sorted.put(key, old + vals[i]);
+		}
+		
+		if(freeExtraMem) {
+			int n = sorted.size();
+			tags = tags == null ? null : Arrays.copyOf(tags, n);
+			idx = Arrays.copyOf(idx, n);
+			vals = Arrays.copyOf(vals, n);
+		}
+		
+		top = 0;
+		for(Long key : sorted.navigableKeySet()) {
+			if(tags != null)
+				tags[top] = unpackTag(key);
+			idx[top] = unpackIndex(key);
+			vals[top] = sorted.get(key);
+			top++;
+		}
 	}
+	
+	private void compact() { compact(false); }
 	
 	/**
 	 * for sparse instances, assumes tag=0
