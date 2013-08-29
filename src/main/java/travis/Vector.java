@@ -45,17 +45,23 @@ public class Vector {
 	// sparse only
 	private int[] tags;
 	private int[] idx;
-	private int top = 0;	// indices less than this are valid
+	private int top;	// indices less than this are valid
 	private int capacity() {
 		assert tags == null || tags.length == idx.length;
 		return idx.length;
 	}
+	
+	
+	// TODO add a flag called "warnUponStupidity" which will warn you if
+	// you happen to fall into one of those weird semi-inefficient operations
+	
 	
 	/**
 	 * Dense constructor
 	 */
 	public Vector(int dimension) {
 		vals = new double[dimension];
+		top = -1;
 	}
 	
 	/**
@@ -63,8 +69,10 @@ public class Vector {
 	 */
 	public Vector(boolean withTags) {
 		int initSize = 32;
-		idx = new int[initSize];
 		if(withTags) tags = new int[initSize];
+		idx = new int[initSize];
+		vals = new double[initSize];
+		top = 0;
 	}
 	
 	public Vector clone() {
@@ -128,9 +136,9 @@ public class Vector {
 		return -1;
 	}
 	
-	private long pack(int tag, int index) { return ((long)tag << 32) | index; }
-	private int unpackTag(long key) { return (int)(key >>> 32); }
-	private int unpackIndex(long key) { return (int)(key & ((1<<32)-1)); }
+	public static long pack(int tag, int index) { return ((long)tag << 32) | index; }
+	public static int unpackTag(long key) { return (int)(key >>> 32); }
+	public static int unpackIndex(long key) { return (int)(key & ((1l<<32)-1l)); }
 	
 	/**
 	 * sort indices and consolidate duplicate entries (only for sparse vectors)
@@ -157,18 +165,30 @@ public class Vector {
 		
 		top = 0;
 		for(Long key : sorted.navigableKeySet()) {
-			if(tags != null)
-				tags[top] = unpackTag(key);
-			idx[top] = unpackIndex(key);
-			vals[top] = sorted.get(key);
-			top++;
+			double val = sorted.get(key);
+			if(val != 0d) {
+				if(tags != null)
+					tags[top] = unpackTag(key);
+				idx[top] = unpackIndex(key);
+				vals[top] = val;
+				top++;
+			}
 		}
 	}
 	
 	private void compact() { compact(false); }
 	
 	/**
-	 * for sparse instances, assumes tag=0
+	 * sets this vector to the 0 vector
+	 */
+	public void clear() {
+		if(isDense())
+			Arrays.fill(vals, 0d);
+		else top = 0;
+	}
+	
+	/**
+	 * for sparse instances assumes tag=0
 	 */
 	public double set(int index, double value) {
 		if(isSparse())
@@ -202,7 +222,7 @@ public class Vector {
 	 * for sparse instances, assumes tag=0
 	 */
 	public void add(int index, double value) {
-		if(isSparse())
+		if(isDense())
 			vals[index] += value;
 		else add(0, index, value);
 	}
@@ -283,7 +303,7 @@ public class Vector {
 			else if(v > 0d && v > biggest)
 				biggest = v;
 		}
-		return biggest;
+		return biggest >= 0 ? biggest : -biggest;
 	}
 	
 	public void makeUnitVector() { scale(1d / l2Norm()); }
