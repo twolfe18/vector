@@ -46,6 +46,7 @@ public class Vector {
 	private int[] tags;
 	private int[] idx;
 	private int top;	// indices less than this are valid
+	private boolean compacted;
 	private int capacity() {
 		assert tags == null || tags.length == idx.length;
 		return idx.length;
@@ -65,6 +66,15 @@ public class Vector {
 	}
 	
 	/**
+	 * repeat a value to make a constant vector
+	 */
+	public static Vector rep(double value, int times) {
+		Vector v = new Vector(times);
+		Arrays.fill(v.vals, value);
+		return v;
+	}
+	
+	/**
 	 * Sparse constructor
 	 */
 	public Vector(boolean withTags) {
@@ -73,6 +83,7 @@ public class Vector {
 		idx = new int[initSize];
 		vals = new double[initSize];
 		top = 0;
+		compacted = true;
 	}
 	
 	public Vector clone() {
@@ -81,6 +92,7 @@ public class Vector {
 		v.idx = idx == null ? null : Arrays.copyOf(idx, idx.length);
 		v.vals = Arrays.copyOf(vals, vals.length);
 		v.top = top;
+		v.compacted = compacted;
 		throw new RuntimeException("make sure you copied all the fields!");
 	}
 	
@@ -120,6 +132,7 @@ public class Vector {
 	
 	// TODO test this!
 	private int findIndexMatching(int tag, int index, int imin, int imax) {
+		assert compacted;
 		long needle = pack(tag, index);
 		while(imin < imax) {
 			int imid = (imax - imin) / 2 + imin; assert(imid < imax);
@@ -136,6 +149,11 @@ public class Vector {
 		return -1;
 	}
 	
+	private long packedIndex(int position) {
+		assert isSparse();
+		int tag = tags == null ? 0 : tags[position];
+		return pack(tag, idx[position]);
+	}
 	public static long pack(int tag, int index) { return ((long)tag << 32) | index; }
 	public static int unpackTag(long key) { return (int)(key >>> 32); }
 	public static int unpackIndex(long key) { return (int)(key & ((1l<<32)-1l)); }
@@ -145,6 +163,9 @@ public class Vector {
 	 * @param freeExtraMem will allocate new arrays as small as possible to store tags/indices/values
 	 */
 	private void compact(boolean freeExtraMem) {			assert isSparse();
+	
+		if(compacted) return;
+		
 		// TODO keep a flag for if has been compacted
 		// TODO special case for no-tags && small-biggest-key => use array instead of treemap?
 		TreeMap<Long, Double> sorted = new TreeMap<Long, Double>();
@@ -174,6 +195,7 @@ public class Vector {
 				top++;
 			}
 		}
+		compacted = true;
 	}
 	
 	private void compact() { compact(false); }
@@ -185,6 +207,7 @@ public class Vector {
 		if(isDense())
 			Arrays.fill(vals, 0d);
 		else top = 0;
+		compacted = true;
 	}
 	
 	/**
@@ -210,6 +233,7 @@ public class Vector {
 		int i = findIndexMatching(tag, index);
 		if(i < 0) {
 			add(tag, index, value);
+			compacted = false;
 			return 0d;
 		} else {
 			double old = vals[i];
@@ -238,6 +262,7 @@ public class Vector {
 		idx[top] = index;
 		vals[top] = value;
 		top++;
+		compacted = false;
 	}
 	
 	private void grow() {
@@ -406,9 +431,24 @@ public class Vector {
 	public double dot(Vector other) {
 		double dot = 0d;
 		if(isSparse() && other.isSparse()) {
-			// use set intersection
-			// (maybe compact both vecs?)
-			throw new RuntimeException("implement me");
+			Vector smaller = this, bigger = other;
+			if(this.top > other.top) {
+				smaller = other; bigger = this;
+			}
+			smaller.compact();
+			bigger.compact();
+			//System.out.printf("smaller.top=%d bigger.top=%d\n", smaller.top, bigger.top);
+			int j = 0;
+			long attempt = bigger.packedIndex(j);
+			for(int i=0; i<smaller.top; i++) {
+				long needle = smaller.packedIndex(i);
+				while(attempt < needle && j < bigger.top-1)
+					attempt = bigger.packedIndex(++j);
+				if(attempt == needle)
+					dot += smaller.vals[i] * bigger.vals[j];
+				if(j == bigger.top)
+					break;
+			}
 		}
 		else if(isSparse() && other.isDense()) {
 			dot = other.dot(this);
@@ -455,6 +495,28 @@ public class Vector {
 	
 	public static Vector sum(Vector a, Vector b) {
 		return sum(a, 1d, b, 1d);
+	}
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		if(isSparse()) {
+			sb.append("{");
+			for(int i=0; i<top; i++) {
+				String tag = tags == null ? "" : tags[i] + ":";
+				sb.append(String.format("%s%d:%.2f", tag, idx[i], vals[i]));
+				if(i < top - 1) sb.append(", ");
+			}
+			sb.append("}");
+		}
+		else {
+			sb.append("[");
+			for(int i=0; i<vals.length; i++) {
+				sb.append(String.format("%.2f", vals[i]));
+				if(i < vals.length - 1) sb.append(", ");
+			}
+			sb.append("]");
+		}
+		return sb.toString();
 	}
 
 	/**

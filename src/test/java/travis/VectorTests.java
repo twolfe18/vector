@@ -6,14 +6,15 @@ import org.junit.Test;
 
 public class VectorTests {
 	
+	private final Random rand = new Random(9001);
+	
 	@Test
 	public void bitHacksTests() {
-		Random r = new Random(9001);
 		int n = 250, k = 25;
 		for(int i=0; i<n; i++) {
 			
-			int tag = r.nextInt(k);
-			int idx = r.nextInt(k);
+			int tag = rand.nextInt(k);
+			int idx = rand.nextInt(k);
 			long packed = Vector.pack(tag, idx);
 			int unpackedTag = Vector.unpackTag(packed);
 			int unpackedIdx = Vector.unpackIndex(packed);
@@ -42,13 +43,12 @@ public class VectorTests {
 		
 		d.clear();
 		Vector s = new Vector(false);
-		Random r = new Random(9001);
 		int t = 50;
 		for(int n=1; n<=1000; n*=10) {
 			for(int iter=0; iter<t; iter++) {
 				for(int i=0; i<n; i++) {
-					int idx = r.nextInt(size);
-					double val = r.nextInt(10) - 5;
+					int idx = rand.nextInt(size);
+					double val = rand.nextInt(10) - 5;
 					d.add(idx, val);
 					s.add(idx, val);
 				}
@@ -104,6 +104,44 @@ public class VectorTests {
 		Assert.assertEquals(3d, t.l1Norm());
 		Assert.assertEquals(2d, t.lInfNorm());
 		Assert.assertEquals(2, t.l0Norm());
+	}
+	
+	@Test
+	public void dotTests() {
+		Vector ones = Vector.rep(1d, 10);
+		Vector s = new Vector(false);
+		Assert.assertEquals(0d, ones.dot(s));
+		s.add(0, 1d);
+		Assert.assertEquals(1d, ones.dot(s));
+		s.add(2, 2d);
+		Assert.assertEquals(3d, ones.dot(s));
+		s.add(4, -3d);
+		Assert.assertEquals(0d, ones.dot(s));
+		s.add(6, 4d);
+		Assert.assertEquals(4d, ones.dot(s));
+		
+		int tries = 50;
+		for(int pow=1; pow<=3; pow++) {
+			int nonzero = (int) Math.pow(10, pow), range = (int)(10d * Math.pow(10, pow));
+			for(int t=0; t<tries; t++) {
+				Vector d1 = new Vector(range);
+				Vector d2 = new Vector(range);
+				Vector s1 = new Vector(false);
+				Vector s2 = new Vector(false);
+				for(int i=0; i<nonzero; i++) {
+					int i1 = rand.nextInt(range);
+					int i2 = rand.nextInt(range);
+					double v1 = rand.nextGaussian();
+					double v2 = rand.nextGaussian();
+					d1.add(i1, v1); s1.add(i1, v1);
+					d2.add(i2, v2); s2.add(i2, v2);
+				}
+				double dd = d1.dot(d2);
+				double sd = s1.dot(s2);
+				//System.out.printf("dense=%.4f sparse=%.4f\n", dd, sd);
+				Assert.assertEquals(dd, sd);
+			}
+		}
 	}
 
 }
