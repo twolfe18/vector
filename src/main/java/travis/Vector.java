@@ -344,13 +344,23 @@ public class Vector {
 			throw new IllegalArgumentException("that temperature is too low!");
 		if(isSparse())
 			throw new RuntimeException("dimension sparse vec not specified, can't compute Z");
-		double z = 0;
+		
+		// exp(x) = exp(B) * exp(x - B)
+		// apply temperature change first, then apply this^ rule
+		double max = vals[0];
 		for(int i=0; i<vals.length; i++) {
-			double v = Math.exp(vals[i] / temperature);
-			vals[i] = v;
-			z += v;
+			double v = vals[i];
+			if(v > max) max = v;
 		}
-		scale(1d / z);
+		double B = max / temperature;
+		
+		double Z = 0d;
+		for(int i=0; i<vals.length; i++) {
+			double v = Math.exp(vals[i] / temperature - B);
+			vals[i] = v;
+			Z += v;
+		}
+		scale(1d / Z);
 	}
 	
 	public void makeProbDist() { makeProbDist(1d); }
