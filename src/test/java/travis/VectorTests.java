@@ -143,5 +143,67 @@ public class VectorTests {
 			}
 		}
 	}
+	
+	@Test
+	public void probTest() {
+		Vector v = Vector.rep(1d, 3);
+		v.makeProbDist();
+		Assert.assertEquals(1/3d, v.get(0));
+		Assert.assertEquals(1/3d, v.get(1));
+		Assert.assertEquals(1/3d, v.get(2));
+		
+		v.clear();
+		//v = Vector.rep(30d, 3);
+		v.makeProbDist();
+		Assert.assertEquals(1/3d, v.get(0));
+		Assert.assertEquals(1/3d, v.get(1));
+		Assert.assertEquals(1/3d, v.get(2));
+		
+		v.clear();
+		//v = Vector.rep(-30d, 3);
+		v.makeProbDist();
+		Assert.assertEquals(1/3d, v.get(0));
+		Assert.assertEquals(1/3d, v.get(1));
+		Assert.assertEquals(1/3d, v.get(2));
+		
+		v = Vector.rep(0d, 2);
+		v.set(0, 1d);
+		v.makeProbDist();
+		double p = Math.exp(1d) / (1d + Math.exp(1d));
+		assertClose(p, v.get(0));
+		assertClose(1d - p, v.get(1));
+		
+		v.clear();
+		v.add(0, 9001d);
+		v.makeProbDist();
+		assertClose(1d, v.get(0));
+		assertClose(0d, v.get(1));
+		
+		v.clear();
+		v.add(0, -9001d);
+		v.makeProbDist();
+		assertClose(0d, v.get(0));
+		assertClose(1d, v.get(1));
+		
+		v.clear();
+		v.add(0, 1d);
+		v.makeProbDist(0.0001d);
+		assertClose(1d, v.get(0));
+		assertClose(0d, v.get(1));
+		
+		v.clear();
+		v.add(0, 1d);
+		v.makeProbDist(9999d);
+		assertClose(1/2d, v.get(0), 1e-4);
+		assertClose(1/2d, v.get(1), 1e-4);
+	}
+	
+	public static void assertClose(double expected, double actual) { assertClose(expected, actual, 1e-8); }
+	public static void assertClose(double expected, double actual, double epsilon) {
+		double diff = actual - expected;
+		Assert.assertTrue(
+				String.format("expected=%.3g actual=%.3g diff=%.3g > %.3g", expected, actual, diff, epsilon),
+				Math.abs(diff) <= epsilon);
+	}
 
 }
