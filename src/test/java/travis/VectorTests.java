@@ -1,6 +1,6 @@
 package travis;
 
-import java.util.Random;
+import java.util.*;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -196,6 +196,83 @@ public class VectorTests {
 		v.makeProbDist(9999d);
 		assertClose(1/2d, v.get(0), 1e-4);
 		assertClose(1/2d, v.get(1), 1e-4);
+	}
+	
+	@Test
+	public void sumAddTests() {
+		int iter = 4;
+		for(Integer size : Arrays.asList(10, 100, 500)) {
+			for(Double addFactor : Arrays.asList(1/8d, 1d, 8d)) {
+				int adds = (int) Math.ceil(size * addFactor);
+
+				Vector s = new Vector(false);
+				Vector s2 = new Vector(false);
+				Vector d = new Vector(size);
+				Vector d2 = new Vector(size);
+
+				s.printWarnings = false;
+				s2.printWarnings = false;
+				d.printWarnings = false;
+				d2.printWarnings = false;
+
+				for(int i=0; i<iter; i++) {
+					int seed = rand.nextInt();
+					randomAdds(s, size, adds, seed);
+					randomAdds(s2, size, adds, seed);
+					randomAdds(d, size, adds, seed);
+					randomAdds(d2, size, adds, seed);
+
+					Vector sd1 = Vector.sum(s, d);
+					Vector sd2 = Vector.sum(d, s);
+					Vector ss = Vector.sum(s, s);
+					Vector dd = Vector.sum(d, d);
+
+					// binary op (no side-effects)
+					assertClose(sd1, sd2, size);
+					assertClose(sd2, ss, size);
+					assertClose(ss, dd, size);
+
+					// sparse += dense
+					s.add(d);
+					assertClose(sd1, s, size);
+
+					// sparse += sparse
+					s.add(s2, -1d);
+					assertClose(s, s2, size);
+
+					// dense += sparse
+					d.add(s2);
+					assertClose(sd1, d, size);
+
+					// dense += dense
+					d.add(d2, -1d);
+					assertClose(d, d2, size);
+
+					s.clear();
+					s2.clear();
+					d.clear();
+					d2.clear();
+				}
+			}
+		}
+	}
+	
+	public void randomAdds(Vector v, int size, int adds, int seed) { randomAdds(v, size, adds, seed, false); }
+	public void randomAdds(Vector v, int size, int adds, int seed, boolean addIntegerValues) {
+		Random r = new Random(seed);
+		double value;
+		for(int i=0; i<adds; i++) {
+			int idx = r.nextInt(size);
+			if(addIntegerValues) value = r.nextInt(10) - 5;
+			else value = r.nextGaussian();
+			v.add(idx, value);
+		}
+	}
+	
+	public static void assertClose(Vector a, Vector b, int size) { assertClose(a, b, size, 1e-8); }
+	public static void assertClose(Vector a, Vector b, int size, double epsilon) {
+		for(int i=0; i<size; i++)
+			assertClose(a.get(i), b.get(i), epsilon);
 	}
 	
 	public static void assertClose(double expected, double actual) { assertClose(expected, actual, 1e-8); }
