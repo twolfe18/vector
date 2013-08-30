@@ -52,10 +52,7 @@ public class Vector {
 		return idx.length;
 	}
 	
-	
-	// TODO add a flag called "warnUponStupidity" which will warn you if
-	// you happen to fall into one of those weird semi-inefficient operations
-	
+	public boolean printWarnings = true;
 	
 	/**
 	 * Dense constructor
@@ -93,7 +90,7 @@ public class Vector {
 		v.vals = Arrays.copyOf(vals, vals.length);
 		v.top = top;
 		v.compacted = compacted;
-		throw new RuntimeException("make sure you copied all the fields!");
+		return v;
 	}
 	
 	public boolean isSparse() { return idx != null; }
@@ -419,8 +416,12 @@ public class Vector {
 			}
 		}
 		else if(isSparse() && other.isDense()) {
-			System.err.println("WARNING: `sparse += dense` is highly inefficient");
-			throw new RuntimeException("i don't feel like providing a implementation for this");
+			if(printWarnings)
+				System.err.println("WARNING: `sparse += dense` is highly inefficient");
+			if(tags != null)
+				throw new RuntimeException("can't coerce sparse vec with tags to dense vec");
+			for(int i=0; i<other.vals.length; i++)
+				add(i, other.get(i));
 		}
 		else if(isDense() && other.isSparse()) {
 			if(other.tags != null)
