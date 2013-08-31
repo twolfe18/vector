@@ -134,7 +134,6 @@ public class Vector {
 		return findIndexMatching(tag, index, 0, top-1);
 	}
 	
-	// TODO test this!
 	private int findIndexMatching(int tag, int index, int imin, int imax) {
 		assert compacted;
 		long needle = pack(tag, index);
@@ -170,7 +169,6 @@ public class Vector {
 	
 		if(compacted) return;
 		
-		// TODO keep a flag for if has been compacted
 		// TODO special case for no-tags && small-biggest-key => use array instead of treemap?
 		TreeMap<Long, Double> sorted = new TreeMap<Long, Double>();
 		for(int i=0; i<top; i++) {
@@ -399,7 +397,7 @@ public class Vector {
 			for(int i=0; i<other.top; i++) {
 				int idx = other.idx[i];
 				while(ptr < idx) vals[ptr++] = 0d;
-				vals[ptr++] *= other.vals[i];		// TODO test this!
+				vals[ptr++] *= other.vals[i];
 			}
 			while(ptr < vals.length) vals[ptr++] = 0d;
 		}
