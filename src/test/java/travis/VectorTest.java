@@ -112,7 +112,6 @@ public class VectorTest {
 	
 	@Test
 	public void scaleTests() {
-		int iter = 10;
 		int iter = 10 * thoroughness;
 		for(int size=10; size<=1000; size*=10) {
 			for(int i=0; i<iter; i++) {
