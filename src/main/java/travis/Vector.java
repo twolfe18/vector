@@ -40,6 +40,8 @@ import java.util.TreeMap;
  */
 public class Vector {
 	
+	// TODO add ability to be a binary vector (with no support for tags)
+	
 	private double[] vals;
 	
 	// sparse only
@@ -350,7 +352,7 @@ public class Vector {
 		// exp(x) = exp(B) * exp(x - B)
 		// apply temperature change first, then apply this^ rule
 		double max = vals[0];
-		for(int i=0; i<vals.length; i++) {
+		for(int i=1; i<vals.length; i++) {
 			double v = vals[i];
 			if(v > max) max = v;
 		}
