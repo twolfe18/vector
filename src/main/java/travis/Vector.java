@@ -16,13 +16,13 @@ import java.util.TreeMap;
  * The dense usage does not allow for this. Any binary ops between sparse and dense
  * instances must not use "tags" (i.e. two int indexing scheme).
  * 
- * <<<< Binary Ops >>>>
+ * ==== Binary Ops ====
  * Op		Sparse		Dense		Mixed
  * +		$			$			$
  * x		!			$			$			// sparse product (vector scale) requires compacting
  * dot		!			$			$			// sparse dot sparse requires set for intersection
  * 
- * <<<< Unary Ops >>>>
+ * ==== Unary Ops ====
  * Op		Sparse		Dense
  * norms	!			$		// sparse requires compacting
  * scale	$			$
@@ -31,7 +31,7 @@ import java.util.TreeMap;
  * set		!			$		// sparse requires compacting
  * clone	$			$
  * 
- * <<<< Side-effect-free Ops >>>>
+ * ==== Side-effect-free Ops ====
  * Op		Sparse		Dense		Mixed
  * sum		$			$			$
  * product	!			$			$		// no implementation for sparse-sparse products yet

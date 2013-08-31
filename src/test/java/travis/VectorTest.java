@@ -4,13 +4,17 @@ import java.util.*;
 import junit.framework.Assert;
 import org.junit.Test;
 
-public class VectorTests {
+public class VectorTest {
 	
+	// increase for longer runtimes and more thorough stochastic tests
+	// (mainly used for scaling up the time taken for benchmarks though)
+	// runtime should increase linearly in this number
+	private final int thoroughness = 100;
 	private final Random rand = new Random(9001);
 	
 	@Test
 	public void bitHacksTests() {
-		int n = 250, k = 25;
+		int n = 250 * thoroughness, k = 25;
 		for(int i=0; i<n; i++) {
 			
 			int tag = rand.nextInt(k);
@@ -43,7 +47,7 @@ public class VectorTests {
 		
 		d.clear();
 		Vector s = Vector.sparse(false);
-		int t = 50;
+		int t = 50 * thoroughness;
 		for(int n=1; n<=1000; n*=10) {
 			for(int iter=0; iter<t; iter++) {
 				for(int i=0; i<n; i++) {
@@ -109,6 +113,7 @@ public class VectorTests {
 	@Test
 	public void scaleTests() {
 		int iter = 10;
+		int iter = 10 * thoroughness;
 		for(int size=10; size<=1000; size*=10) {
 			for(int i=0; i<iter; i++) {
 				for(Double factor : Arrays.asList(0.001d, 0.1d, 10d, 1000d)) {
@@ -147,7 +152,7 @@ public class VectorTests {
 		s.add(6, 4d);
 		Assert.assertEquals(4d, ones.dot(s));
 		
-		int tries = 50;
+		int tries = 50 * thoroughness;
 		for(int pow=1; pow<=3; pow++) {
 			int nonzero = (int) Math.pow(10, pow), range = (int)(10d * Math.pow(10, pow));
 			for(int t=0; t<tries; t++) {
@@ -227,7 +232,7 @@ public class VectorTests {
 	
 	@Test
 	public void sumAddTests() {
-		int iter = 4;
+		int iter = 4 * thoroughness;
 		for(Integer size : Arrays.asList(10, 100, 500)) {
 			for(Double addFactor : Arrays.asList(1/8d, 1d, 8d)) {
 				int adds = (int) Math.ceil(size * addFactor);
