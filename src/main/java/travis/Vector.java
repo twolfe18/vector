@@ -62,6 +62,8 @@ public class Vector {
 		top = -1;
 	}
 	
+	public static Vector dense(int dimension) { return new Vector(dimension); }
+	
 	/**
 	 * repeat a value to make a constant vector
 	 */
@@ -74,14 +76,19 @@ public class Vector {
 	/**
 	 * Sparse constructor
 	 */
-	public Vector(boolean withTags) {
-		int initSize = 32;
-		if(withTags) tags = new int[initSize];
-		idx = new int[initSize];
-		vals = new double[initSize];
+	public Vector(boolean withTags, int initCapacity) {
+		if(withTags) tags = new int[initCapacity];
+		idx = new int[initCapacity];
+		vals = new double[initCapacity];
 		top = 0;
 		compacted = true;
 	}
+	
+	public static final int defaultSparseInitCapacity = 16;
+	public static Vector sparse() { return new Vector(false, defaultSparseInitCapacity); }
+	public static Vector sparse(int initCapacity) { return new Vector(false, initCapacity); }
+	public static Vector sparse(boolean withTags) { return new Vector(withTags, defaultSparseInitCapacity); }
+	public static Vector sparse(boolean withTags, int initCapacity) { return new Vector(withTags, initCapacity); }
 	
 	public Vector clone() {
 		Vector v = new Vector(0);

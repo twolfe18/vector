@@ -42,7 +42,7 @@ public class VectorTests {
 		Assert.assertEquals(2d, d.get(2));
 		
 		d.clear();
-		Vector s = new Vector(false);
+		Vector s = Vector.sparse(false);
 		int t = 50;
 		for(int n=1; n<=1000; n*=10) {
 			for(int iter=0; iter<t; iter++) {
@@ -89,7 +89,7 @@ public class VectorTests {
 		Assert.assertEquals(2d, d.lInfNorm());
 		Assert.assertEquals(2, d.l0Norm());
 		
-		Vector s = new Vector(false);
+		Vector s = Vector.sparse(false);
 		s.add(0, 1d);
 		s.add(2, -2d);
 		Assert.assertEquals(Math.sqrt(5d), s.l2Norm());
@@ -97,7 +97,7 @@ public class VectorTests {
 		Assert.assertEquals(2d, s.lInfNorm());
 		Assert.assertEquals(2, s.l0Norm());
 		
-		Vector t = new Vector(true);
+		Vector t = Vector.sparse(false);
 		t.add(0, 0, 1d);
 		t.add(1, 2, -2d);
 		Assert.assertEquals(Math.sqrt(5d), t.l2Norm());
@@ -109,7 +109,7 @@ public class VectorTests {
 	@Test
 	public void dotTests() {
 		Vector ones = Vector.rep(1d, 10);
-		Vector s = new Vector(false);
+		Vector s = Vector.sparse(false);
 		Assert.assertEquals(0d, ones.dot(s));
 		s.add(0, 1d);
 		Assert.assertEquals(1d, ones.dot(s));
@@ -124,10 +124,10 @@ public class VectorTests {
 		for(int pow=1; pow<=3; pow++) {
 			int nonzero = (int) Math.pow(10, pow), range = (int)(10d * Math.pow(10, pow));
 			for(int t=0; t<tries; t++) {
-				Vector d1 = new Vector(range);
-				Vector d2 = new Vector(range);
-				Vector s1 = new Vector(false);
-				Vector s2 = new Vector(false);
+				Vector d1 = Vector.dense(range);
+				Vector d2 = Vector.dense(range);
+				Vector s1 = Vector.sparse(false);
+				Vector s2 = Vector.sparse(false);
 				for(int i=0; i<nonzero; i++) {
 					int i1 = rand.nextInt(range);
 					int i2 = rand.nextInt(range);
@@ -205,10 +205,10 @@ public class VectorTests {
 			for(Double addFactor : Arrays.asList(1/8d, 1d, 8d)) {
 				int adds = (int) Math.ceil(size * addFactor);
 
-				Vector s = new Vector(false);
-				Vector s2 = new Vector(false);
-				Vector d = new Vector(size);
-				Vector d2 = new Vector(size);
+				Vector s = Vector.sparse(false);
+				Vector s2 = Vector.sparse(false);
+				Vector d = Vector.dense(size);
+				Vector d2 = Vector.dense(size);
 
 				s.printWarnings = false;
 				s2.printWarnings = false;
