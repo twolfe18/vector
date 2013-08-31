@@ -107,6 +107,33 @@ public class VectorTests {
 	}
 	
 	@Test
+	public void scaleTests() {
+		int iter = 10;
+		for(int size=10; size<=1000; size*=10) {
+			for(int i=0; i<iter; i++) {
+				for(Double factor : Arrays.asList(0.001d, 0.1d, 10d, 1000d)) {
+					Vector d = Vector.dense(size);
+					Vector s = Vector.sparse();
+					int seed = rand.nextInt();
+					randomAdds(d, size, size/2, seed);
+					randomAdds(s, size, size/2, seed);
+					for(Vector v : Arrays.asList(d, s)) {
+						int l0 = v.l0Norm();
+						double l1 = v.l1Norm();
+						double l2 = v.l2Norm();
+						double li = v.lInfNorm();
+						v.scale(factor);
+						Assert.assertEquals(l0, v.l0Norm());
+						assertClose(l1 * factor, v.l1Norm());
+						assertClose(l2 * factor, v.l2Norm());
+						assertClose(li * factor, v.lInfNorm());
+					}
+				}
+			}
+		}
+	}
+	
+	@Test
 	public void dotTests() {
 		Vector ones = Vector.rep(1d, 10);
 		Vector s = Vector.sparse(false);
