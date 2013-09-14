@@ -9,7 +9,7 @@ public class VectorTest {
 	// increase for longer runtimes and more thorough stochastic tests
 	// (mainly used for scaling up the time taken for benchmarks though)
 	// runtime should increase linearly in this number
-	private final int thoroughness = 100;
+	private final int thoroughness = 1;
 	private final Random rand = new Random(9001);
 	
 	@Test
@@ -108,6 +108,12 @@ public class VectorTest {
 		Assert.assertEquals(3d, t.l1Norm());
 		Assert.assertEquals(2d, t.lInfNorm());
 		Assert.assertEquals(2, t.l0Norm());
+		
+		Vector empty = Vector.sparse();
+		Assert.assertEquals(0, empty.l0Norm());
+		Assert.assertEquals(0d, empty.l1Norm());
+		Assert.assertEquals(0d, empty.l2Norm());
+		Assert.assertEquals(0d, empty.lInfNorm());
 	}
 	
 	@Test
@@ -284,6 +290,79 @@ public class VectorTest {
 					d.clear();
 					d2.clear();
 				}
+			}
+		}
+	}
+	
+	@Test
+	public void outerProductTest() {
+		Vector a = Vector.sparse(), b = Vector.sparse();
+		
+		a.add(1, 2d);
+		a.add(2, 3d);
+		a.add(4, 4d);
+		
+		b.add(2, 1d);
+		b.add(3, 2d);
+		b.add(4, 3d);
+		
+		Vector c = Vector.outerProduct(a, b);
+		Assert.assertTrue(c.isTagged());
+		Assert.assertEquals(0d, c.get(1, 1));
+		Assert.assertEquals(2d, c.get(1, 2));
+		Assert.assertEquals(4d, c.get(1, 3));
+		Assert.assertEquals(6d, c.get(1, 4));
+		Assert.assertEquals(0d, c.get(2, 1));
+		Assert.assertEquals(3d, c.get(2, 2));
+		Assert.assertEquals(6d, c.get(2, 3));
+		Assert.assertEquals(9d, c.get(2, 4));
+		Assert.assertEquals(0d, c.get(3, 1));
+		Assert.assertEquals(0d, c.get(3, 2));
+		Assert.assertEquals(0d, c.get(3, 3));
+		Assert.assertEquals(0d, c.get(3, 4));
+		Assert.assertEquals(0d, c.get(4, 1));
+		Assert.assertEquals(4d, c.get(4, 2));
+		Assert.assertEquals(8d, c.get(4, 3));
+		Assert.assertEquals(12d, c.get(4, 4));
+		
+		int dim = 300;
+		Vector result = Vector.sparse(true);
+		Vector sa = Vector.sparse(), sb = Vector.sparse();
+		Vector da = Vector.dense(dim), db = Vector.dense(dim);
+		for(int i=0; i<3*thoroughness; i++) {
+			for(int adds=10; adds<=2*dim; adds*=5) {
+				int ra = rand.nextInt();
+				int rb = rand.nextInt();
+			
+				sa.clear(); sb.clear(); da.clear(); db.clear();
+				randomAdds(sa, dim, adds, ra);
+				randomAdds(da, dim, adds, ra);
+				randomAdds(sb, dim, adds, rb);
+				randomAdds(db, dim, adds, rb);
+				
+				Vector dd = Vector.outerProduct(da, db);
+				Vector ds = Vector.outerProduct(da, sb);
+				Vector sd = Vector.outerProduct(sa, db);
+				Vector ss = Vector.outerProduct(sa, sb);
+				assertClose(dd, ds, dim);
+				assertClose(ds, sd, dim);
+				assertClose(sd, ss, dim);
+				
+				result.clear();
+				Vector.outerProduct(da, db, result);
+				assertClose(result, dd, dim);
+				
+				result.clear();
+				Vector.outerProduct(da, sb, result);
+				assertClose(result, dd, dim);
+				
+				result.clear();
+				Vector.outerProduct(sa, db, result);
+				assertClose(result, dd, dim);
+				
+				result.clear();
+				Vector.outerProduct(sa, sb, result);
+				assertClose(result, dd, dim);
 			}
 		}
 	}

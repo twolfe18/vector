@@ -1,6 +1,7 @@
 package travis;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 /**
@@ -41,6 +42,14 @@ import java.util.TreeMap;
 public class Vector {
 	
 	// TODO add ability to be a binary vector (with no support for tags)
+	
+	// TODO
+	// 1) constructors that take arrays
+	// 2) split into Vector interface and SVec, DVec that implement them
+	// 3) BVec can also implement Vector based on a bitset
+	// 4) have a static class that implements binary operators efficiently
+	//		(this will need to inspect things like int[] idx, experiment with how to do this efficiently and safely)
+	
 	
 	private double[] vals;
 	
@@ -104,6 +113,7 @@ public class Vector {
 	
 	public boolean isSparse() { return idx != null; }
 	public boolean isDense() { return idx == null; }
+	public boolean isTagged() { return tags != null; }
 	
 	/**
 	 * for sparse instances, assumes tag=0
@@ -369,6 +379,15 @@ public class Vector {
 	
 	public void makeProbDist() { makeProbDist(1d); }
 	
+	public void exponentiate(double power) {
+		int n = vals.length;
+		if(isSparse()) {
+			n = top;
+			compact();
+		}
+		for(int i=0; i<n; i++) vals[i] = Math.pow(vals[i], power);
+	}
+	
 	public void scale(double factor) {
 		// no need to compact here: a*x + a*y = a*(x+y)
 		int n = isSparse() ? top : vals.length;
@@ -491,10 +510,19 @@ public class Vector {
 	 * component-wise product
 	 */
 	public static Vector prod(Vector a, Vector b) {
-		if(a.isDense()) { Vector t = a; a = b; b = t; }
+		if(a.isSparse() /*&& b.isDense()*/); { Vector t = a; a = b; b = t; }
 		Vector c = a.clone();
 		c.scale(b);
 		return c;
+	}
+
+	/**
+	 * scalar-vector multiplication
+	 */
+	public static Vector prod(Vector a, double factor) {
+		Vector b = a.clone();
+		b.scale(factor);
+		return b;
 	}
 
 	/**
@@ -513,6 +541,95 @@ public class Vector {
 	
 	public static Vector sum(Vector a, Vector b) {
 		return sum(a, 1d, b, 1d);
+	}
+	
+	/**
+	 * a and b must not have tags (but can be sparse or dense)
+	 */
+	public static Vector outerProduct(Vector a, Vector b) {
+		int na = a.isSparse() ? a.top : a.vals.length;
+		int nb = b.isSparse() ? b.top : b.vals.length;
+		Vector s = Vector.sparse(true, na * nb);
+		outerProduct(a, b, s);
+		return s;
+	}
+	
+	/**
+	 * result must be a sparse and tagged.
+	 * adds to result, which must be 0 for correctness.
+	 * indices from a will go in the tag, indices from b will go in
+	 * the index (of result).
+	 */
+	public static void outerProduct(Vector a, Vector b, Vector result) {
+		if(!(result.isSparse() && result.isTagged()))
+			throw new IllegalArgumentException("must provide a sparse tagged result vector");
+		boolean aSparse = a.isSparse(), bSparse = b.isSparse();
+		int na = aSparse ? a.top : a.vals.length;
+		int nb = bSparse ? b.top : b.vals.length;
+		for(int i=0; i<na; i++) {
+			int idx_i = aSparse ? a.idx[i] : i;
+			double val_i = a.vals[i];
+			for(int j=0; j<nb; j++) {
+				int idx_j = bSparse ? b.idx[j] : j;
+				double value = val_i * b.vals[j];
+				result.add(idx_i, idx_j, value);
+			}
+		}
+	}
+	
+	public Vector idxPairs() {
+		int n = isSparse() ? top : vals.length;
+		Vector pairs = Vector.sparse(false, n * (n-1) / 2);
+		idxPairs(pairs);
+		return pairs;
+	}
+	
+	public void idxPairs(Vector addTo) {
+		boolean s = isSparse();
+		int n = s ? top : vals.length;
+		for(int i=0; i<n-1; i++) {
+			int ii = s ? idx[i] : i;
+			double iv = vals[i];
+			for(int j=i+1; j<n; j++) {
+				int jj = s ? idx[j] : j;
+				double jv = vals[j];
+				// index int overflow is OK because we
+				// are going to hash these values anyway
+				addTo.add(ii * jj, iv * jv);
+			}
+		}
+	}
+	
+	private class DenseIdxIter implements Iterator<Integer> {
+		private int dim, cur = 0;
+		public DenseIdxIter(int dimension) { dim = dimension; }
+		@Override
+		public boolean hasNext() { return cur < dim; }
+		@Override
+		public Integer next() { return cur++; }
+		@Override
+		public void remove() { throw new UnsupportedOperationException(); }
+	}
+	
+	private class SparseIdxIter implements Iterator<Integer> {
+		private int i = 0, top;
+		private int[] idx;
+		public SparseIdxIter(int[] idx, int top) {
+			this.idx = idx;
+			this.top = top;
+		}
+		@Override
+		public boolean hasNext() { return i < top; }
+		@Override
+		public Integer next() { return idx[i++]; }
+		@Override
+		public void remove() { throw new UnsupportedOperationException(); }
+	}
+	
+	public Iterator<Integer> indices() {
+		if(isTagged()) throw new RuntimeException();
+		if(isSparse()) return new SparseIdxIter(idx, top);
+		else return new DenseIdxIter(vals.length);
 	}
 	
 	public String toString() {
@@ -540,15 +657,14 @@ public class Vector {
 	/**
 	 * returns true if any values are NaN or Inf
 	 */
-	public boolean checkForBadValues() {
-		boolean bad = false;
+	public boolean hasBadValues() {
 		int n = isSparse() ? top : vals.length;
 		for(int i=0; i<n; i++) {
 			double v = vals[i];
-			bad = !bad && !Double.isNaN(v) && !Double.isInfinite(v);
-			assert !bad;
+			boolean bad = Double.isNaN(v) || Double.isInfinite(v);
+			if(bad) return true;
 		}
-		return bad;
+		return false;
 	}
 
 }
