@@ -147,6 +147,16 @@ public class SVec extends Vec<SVec> {
 	
 	@Override
 	public Iterator<IndexValue> nonZero() {
+		return iter();
+	}
+	
+	@Override
+	public Iterator<IndexValue> sortedUniqNonZero() {
+		compact();
+		return iter();
+	}
+	
+	private Iterator<IndexValue> iter() {
 		return new Iterator<IndexValue>() {
 			private int i = 0;
 			private IndexValue iv = new IndexValue(-1, Double.NaN);

@@ -7,6 +7,7 @@ public class IndexValue {
 		index = i;
 		value = v;
 	}
+	public long fullIndex() { return index; }
 	public double magnitude() {
 		if(value < 0d)
 			return -value;

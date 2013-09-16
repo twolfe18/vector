@@ -165,12 +165,27 @@ public class TSVec extends Vec<TSVec> {
 
 	@SuppressWarnings("unchecked")
 	@Override
+	public Iterator<IndexValue> sortedUniqNonZero() {
+		compact();
+		return (Iterator<IndexValue>) ((Iterator<?>) iter());
+	}
+	
+	public Iterator<TaggedIndexValue> sortedUniqNonZeroTagged() {
+		compact();
+		return iter();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
 	public Iterator<IndexValue> nonZero() {
-		// return (Iterator<IndexValue>) nonZeroTagged();	// doesn't work?
-		return (Iterator<IndexValue>) ((Iterator<?>) nonZeroTagged());
+		return (Iterator<IndexValue>) ((Iterator<?>) iter());
 	}
 	
 	public Iterator<TaggedIndexValue> nonZeroTagged() {
+		return iter();
+	}
+	
+	private Iterator<TaggedIndexValue> iter() {
 		return new Iterator<TaggedIndexValue>() {
 			private int i = 0;
 			private TaggedIndexValue tiv = new TaggedIndexValue(-1, -1, Double.NaN);

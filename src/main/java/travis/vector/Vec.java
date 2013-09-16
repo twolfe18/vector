@@ -4,7 +4,10 @@ import java.util.Iterator;
 
 import travis.util.IndexValue;
 
-public abstract class Vec<T extends Vec<?>> {
+/**
+ * @param <T> will be either DVec, SVec, BVec, or TSVec
+ */
+public abstract class Vec<T extends Vec<?>> implements Iterable<IndexValue> {
 	
 	public abstract double get(int i);
 	
@@ -30,13 +33,42 @@ public abstract class Vec<T extends Vec<?>> {
 	 */
 	public abstract T clone();
 	
+	/**
+	 * an iterator of unique nonzero index-values where the
+	 * fullIndex()s returned are _unique_ and _sorted_ (ascending)
+	 * 
+	 * NOTE: you should capture (and use) references to
+	 * things returned from calls to next() (these iterators
+	 * may avoid allocating a new IndexValue for performance).
+	 */
+	public abstract Iterator<IndexValue> sortedUniqNonZero();
+
+	// NOTE I could introduce:
+	// public abstract Iterator<IndexValue> uniqNonZero();
+	// (which is all that is needed to l0, l1, l2 norms), but
+	// [1] I don't see an efficient impl of this (that is not also sortedUniqNonZero)
+	// [2] if this becomes an issue, someone can override the norm functions
+	
 	/* everything below here has an implementation based on stuff above here
 	   you can always override the definitions below with more efficient versions */
 	
 	/**
 	 * an iterator of unique nonzero index-values
+	 * 
+	 * NOTE: you should capture (and use) references to
+	 * things returned from calls to next() (these iterators
+	 * may avoid allocating a new IndexValue for performance).
 	 */
-	public abstract Iterator<IndexValue> nonZero();
+	public Iterator<IndexValue> nonZero() {
+		return sortedUniqNonZero();
+	}
+	
+	/**
+	 * for use in foreach loops, calls sortedUniqNonZero()
+	 */
+	public final Iterator<IndexValue> iterator() {
+		return sortedUniqNonZero();
+	}
 	
 	public void makeUnit() { timesEquals(1d / l2Norm()); }
 	
@@ -68,14 +100,14 @@ public abstract class Vec<T extends Vec<?>> {
 	
 	public int l0Norm() {
 		int nz = 0;
-		Iterator<IndexValue> iter = nonZero();
+		Iterator<IndexValue> iter = sortedUniqNonZero();
 		while(iter.hasNext()) { iter.next(); nz++; }
 		return nz;
 	}
 
 	public double l1Norm() {
 		double s = 0d;
-		Iterator<IndexValue> iter = nonZero();
+		Iterator<IndexValue> iter = sortedUniqNonZero();
 		while(iter.hasNext()) {
 			IndexValue iv = iter.next();
 			s += iv.magnitude();
@@ -85,7 +117,7 @@ public abstract class Vec<T extends Vec<?>> {
 	
 	public double l2Norm() {
 		double ss = 0d;
-		Iterator<IndexValue> iter = nonZero();
+		Iterator<IndexValue> iter = sortedUniqNonZero();
 		while(iter.hasNext()) {
 			IndexValue iv = iter.next();
 			double v = iv.value;
@@ -96,7 +128,7 @@ public abstract class Vec<T extends Vec<?>> {
 	
 	public double lInfNorm() {
 		double mm = 0d;
-		Iterator<IndexValue> iter = nonZero();
+		Iterator<IndexValue> iter = sortedUniqNonZero();
 		while(iter.hasNext()) {
 			IndexValue iv = iter.next();
 			double m = iv.magnitude();

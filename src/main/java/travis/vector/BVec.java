@@ -54,11 +54,15 @@ public class BVec extends Vec<BVec> {
 	@Override
 	public void timesEquals(double d) { throw new UnsupportedOperationException(); }
 
+	public void timesEquals(BVec other) {
+		values.and(other.values);
+	}
+	
 	@Override
 	public void plusEquals(double s) { throw new UnsupportedOperationException(); }
 
 	@Override
-	public Iterator<IndexValue> nonZero() {
+	public Iterator<IndexValue> sortedUniqNonZero() {
 		return new Iterator<IndexValue>() {
 			private int shownUpTo = 0;
 			private IndexValue iv = new IndexValue(-1, Double.NaN);

@@ -36,6 +36,34 @@ public class DVec extends Vec<DVec> {
 		for(int i=0; i<values.length; i++)
 			values[i] *= d;
 	}
+	
+	/**
+	 * product-wise: this *= (scale * other)
+	 */
+	public void timesEquals(Vec<?> other, double scale) {
+		if(other instanceof DVec) {
+			DVec d = (DVec) other;
+			assert(dimension() == d.dimension());
+			for(int i=0; i<values.length; i++)
+				values[i] *= scale * d.values[i];
+		}
+		else {	// sparse
+			int i = 0;
+			for(IndexValue iv : other) {
+				for(; i<iv.index; i++)
+					values[i] = 0d;
+				values[i] *= scale * iv.value;
+				i++;
+			}
+			for(; i<values.length; i++)
+				values[i] = 0;
+		}
+	}
+	
+	/**
+	 * product-wise: this *= other
+	 */
+	public void timesEquals(Vec<?> other) { timesEquals(other, 1d); }
 
 	@Override
 	public void plusEquals(double s) {
@@ -44,7 +72,7 @@ public class DVec extends Vec<DVec> {
 	}
 
 	@Override
-	public Iterator<IndexValue> nonZero() {
+	public Iterator<IndexValue> sortedUniqNonZero() {
 		return new Iterator<IndexValue>() {
 			private int i = 0;
 			private IndexValue iv = new IndexValue(-1, Double.NaN);

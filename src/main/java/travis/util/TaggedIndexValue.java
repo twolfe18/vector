@@ -6,5 +6,9 @@ public class TaggedIndexValue extends IndexValue {
 		super(i, v);
 		tag = t;		
 	}
+	@Override
+	public long fullIndex() {
+		return BitHacks.pack(tag, index);
+	}
 }
 
