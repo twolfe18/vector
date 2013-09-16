@@ -25,6 +25,11 @@ public abstract class Vec {
 	
 	public abstract void plusEquals(double s);
 	
+	/**
+	 * deep copy
+	 */
+	public abstract Vec clone();
+	
 	/* everything below here has an implementation based on stuff above here
 	   you can always override the definitions below with more efficient versions */
 	

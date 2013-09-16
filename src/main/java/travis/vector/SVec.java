@@ -10,8 +10,24 @@ public class SVec extends Vec {
 	
 	private int[] indices;
 	private double[] values;
-	private boolean compacted = false;
-	private int top = 0;
+	private boolean compacted;	// are indices sorted and unique?
+	private int top;			// values in `indices` and `values` with indices < top are valid
+	
+	public SVec() { this(16); }
+	
+	public SVec(int capacity) {
+		indices = new int[capacity];
+		values = new double[capacity];
+		compacted = true;
+		top = 0;
+	}
+	
+	public SVec(int[] indices, double[] values) {
+		this.indices = indices;
+		this.values = values;
+		top = indices.length;
+		compacted = false;
+	}
 	
 	// use this for testing the speed of getting raw arrays vs using iterator
 	class UnsafeSVec extends SVec {
@@ -125,6 +141,28 @@ public class SVec extends Vec {
 	
 	@Override
 	public Iterator<IndexValue> nonZero() {
-		// TODO
+		return new Iterator<IndexValue>() {
+			private int i = 0;
+			private IndexValue iv = new IndexValue(-1, Double.NaN);
+			@Override
+			public boolean hasNext() { return i < top; }
+			@Override
+			public IndexValue next() {
+				iv.index = indices[i];
+				iv.value = values[i];
+				i++;
+				return iv;
+			}
+			@Override
+			public void remove() { throw new UnsupportedOperationException(); }
+		};
 	}
+
+	@Override
+	public Vec clone() {
+		int[] i = Arrays.copyOf(indices, indices.length);
+		double[] v = Arrays.copyOf(values, values.length);
+		return new SVec(i, v);
+	}
+
 }

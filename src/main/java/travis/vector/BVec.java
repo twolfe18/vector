@@ -9,7 +9,16 @@ import travis.util.IndexValue;
  * bit vector backed by a java.util.BitSet
  */
 public class BVec extends Vec {
+	
 	private BitSet values;
+	
+	public BVec(int dimension) {
+		values = new BitSet(dimension);
+	}
+	
+	public int dimension() {
+		return values.cardinality();
+	}
 
 	@Override
 	public double get(int i) {

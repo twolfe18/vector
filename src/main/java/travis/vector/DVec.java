@@ -8,7 +8,17 @@ import travis.util.IndexValue;
 public class DVec extends Vec {
 	
 	private double[] values;
+	
+	public DVec(double[] vals) {
+		values = vals;
+	}
+	
+	public DVec(int dimension) {
+		values = new double[dimension];
+	}
 
+	public int dimension() { return values.length; }
+	
 	@Override
 	public double get(int i) { return values[i]; }
 
@@ -50,5 +60,10 @@ public class DVec extends Vec {
 			@Override
 			public void remove() { throw new UnsupportedOperationException(); }
 		};
+	}
+
+	@Override
+	public Vec clone() {
+		return new DVec(Arrays.copyOf(values, values.length));
 	}
 }
