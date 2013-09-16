@@ -1,6 +1,7 @@
 package travis.vector;
 
 import java.util.Iterator;
+import java.util.List;
 
 import travis.util.IndexValue;
 
@@ -9,12 +10,55 @@ import travis.util.IndexValue;
  */
 public class VecOps {
 
-	public Vec sum(Vec a, Vec b) {
+	public Vec<?> sum(Vec a, Vec b) {
 		
+		// D + D = D
+		// D + S = D
+		// D + B = D
+		if(a instanceof DVec)
+			return sum((DVec) a, b);
+		if(b instanceof DVec)
+			return sum((DVec) b, a);
+		
+		// S + S = S
+		// S + B = S
+		if(a instanceof SVec)
+			return sum((SVec) a, b);
+		if(b instanceof SVec)
+			return sum((SVec) b, a);
+		
+		// B + B = B
+		Vec<?> c = a.clone();
+		c.add(b);
+		return c;
 	}
 	
-	public Vec sum(List<Vec> vecs) {
-		
+	/**
+	 * @param a
+	 * @param b: either SVec or BVec
+	 */
+	private DVec sum(DVec a, Vec<?> b) {
+		DVec c = a.clone();
+		c.add(b);
+		return c;
+	}
+	
+	/**
+	 * @param a
+	 * @param b: either SVec or BVec
+	 * @return
+	 */
+	private SVec sum(SVec a, Vec<?> b) {
+		SVec c = a.clone();
+		c.add(b);
+		return c;
+	}
+	
+	public Vec<?> sum(List<Vec<?>> vecs) {
+		Vec<?> accum = vecs.get(0);
+		for(int i=1; i<vecs.size(); i++)
+			accum = sum(accum, vecs.get(i));
+		return accum;
 	}
 	
 	public Vec prod(Vec a, Vec b) {
@@ -40,14 +84,4 @@ public class VecOps {
 		return d;
 	}
 
-	/*
-	 * would be nice to implement all binary ops as:
-	 * 
-	 * def op(a, b):
-	 *   c = a.clone
-	 *   c op= b
-	 *   return c
-	 * 
-	 * this does not force you to support op= in all derived classes!
-	 */	
 }

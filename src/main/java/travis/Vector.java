@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeMap;
 
+import travis.util.BitHacks;
+
 /**
  * The one true vector!
  * 
@@ -148,17 +150,17 @@ public class Vector {
 	
 	private int findIndexMatching(int tag, int index, int imin, int imax) {
 		assert compacted;
-		long needle = pack(tag, index);
+		long needle = BitHacks.pack(tag, index);
 		while(imin < imax) {
 			int imid = (imax - imin) / 2 + imin; assert(imid < imax);
-			long mid = pack(tags == null ? 0 : tags[imid], idx[imid]);
+			long mid = BitHacks.pack(tags == null ? 0 : tags[imid], idx[imid]);
 			if(mid < needle)
 				imin = imid + 1;
 			else
 				imax = imid;
 		}
 		if(imax == imin) {
-			long found = pack(tags == null ? 0 : tags[imin], idx[imin]);
+			long found = BitHacks.pack(tags == null ? 0 : tags[imin], idx[imin]);
 			if(found == needle) return imin;
 		}
 		return -1;
@@ -167,11 +169,8 @@ public class Vector {
 	private long packedIndex(int position) {
 		assert isSparse();
 		int tag = tags == null ? 0 : tags[position];
-		return pack(tag, idx[position]);
+		return BitHacks.pack(tag, idx[position]);
 	}
-	public static long pack(int tag, int index) { return ((long)tag << 32) | index; }
-	public static int unpackTag(long key) { return (int)(key >>> 32); }
-	public static int unpackIndex(long key) { return (int)(key & ((1l<<32)-1l)); }
 	
 	/**
 	 * sort indices and consolidate duplicate entries (only for sparse vectors)
@@ -185,7 +184,7 @@ public class Vector {
 		TreeMap<Long, Double> sorted = new TreeMap<Long, Double>();
 		for(int i=0; i<top; i++) {
 			int tag = tags == null ? 0 : tags[i];
-			long key = pack(tag, idx[i]);
+			long key = BitHacks.pack(tag, idx[i]);
 			Double old = sorted.get(key);
 			if(old == null) old = 0d;
 			sorted.put(key, old + vals[i]);
@@ -203,8 +202,8 @@ public class Vector {
 			double val = sorted.get(key);
 			if(val != 0d) {
 				if(tags != null)
-					tags[top] = unpackTag(key);
-				idx[top] = unpackIndex(key);
+					tags[top] = BitHacks.unpackTag(key);
+				idx[top] = BitHacks.unpackIndex(key);
 				vals[top] = val;
 				top++;
 			}

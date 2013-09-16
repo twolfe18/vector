@@ -6,14 +6,16 @@ import java.util.TreeMap;
 
 import travis.util.IndexValue;
 
-public class SVec extends Vec {
+public class SVec extends Vec<SVec> {
+	
+	public static final int DEFAULT_CAPACITY = 16;
 	
 	private int[] indices;
 	private double[] values;
 	private boolean compacted;	// are indices sorted and unique?
 	private int top;			// values in `indices` and `values` with indices < top are valid
 	
-	public SVec() { this(16); }
+	public SVec() { this(DEFAULT_CAPACITY); }
 	
 	public SVec(int capacity) {
 		indices = new int[capacity];
@@ -105,11 +107,15 @@ public class SVec extends Vec {
 	
 	@Override
 	public void add(int i, double v) {
-		if(top == capacity()) grow();
-		indices[top] = i;
-		values[top] = v;
-		top++;
-		compacted = false;
+		if(i == indices[top-1]) {
+			values[top-1] += v;
+		} else {
+			if(top == capacity()) grow();
+			indices[top] = i;
+			values[top] = v;
+			compacted &= (i > indices[top-1]);
+			top++;
+		}
 	}
 	
 	@Override
@@ -159,9 +165,10 @@ public class SVec extends Vec {
 	}
 
 	@Override
-	public Vec clone() {
-		int[] i = Arrays.copyOf(indices, indices.length);
-		double[] v = Arrays.copyOf(values, values.length);
+	public SVec clone() {
+		int n = top;	// indices.length;
+		int[] i = Arrays.copyOf(indices, n);
+		double[] v = Arrays.copyOf(values, n);
 		return new SVec(i, v);
 	}
 

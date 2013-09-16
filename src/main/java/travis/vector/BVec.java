@@ -7,13 +7,21 @@ import travis.util.IndexValue;
 
 /**
  * bit vector backed by a java.util.BitSet
+ * (should have amortized cost of 1 bit per dimension)
+ * 
+ * TODO: should `add` have `or` semantics (for only BVec)?
+ *       preliminary (conservative) answer: no
  */
-public class BVec extends Vec {
+public class BVec extends Vec<BVec> {
 	
 	private BitSet values;
 	
 	public BVec(int dimension) {
 		values = new BitSet(dimension);
+	}
+	
+	public BVec(BitSet values) {
+		this.values = values;
 	}
 	
 	public int dimension() {
@@ -29,6 +37,7 @@ public class BVec extends Vec {
 	public void add(int i, double v) {
 		if(v != 1d)
 			throw new IllegalArgumentException();
+		assert(get(i) == 0d);
 		values.set(i);
 	}
 
@@ -50,6 +59,27 @@ public class BVec extends Vec {
 
 	@Override
 	public Iterator<IndexValue> nonZero() {
-		// TODO
+		return new Iterator<IndexValue>() {
+			private int shownUpTo = 0;
+			private IndexValue iv = new IndexValue(-1, Double.NaN);
+			@Override
+			public boolean hasNext() { return shownUpTo >= 0; }
+			@Override
+			public IndexValue next() {
+				iv.index = shownUpTo;
+				iv.value = 1d;
+				shownUpTo = values.nextSetBit(shownUpTo);
+				return iv;
+			}
+			@Override
+			public void remove() { throw new UnsupportedOperationException(); }
+		};
+	}
+
+	@Override
+	public BVec clone() {
+		BitSet nbs = new BitSet(values.cardinality());
+		nbs.or(values);
+		return new BVec(nbs);
 	}
 }

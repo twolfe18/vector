@@ -4,7 +4,7 @@ import java.util.Iterator;
 
 import travis.util.IndexValue;
 
-public abstract class Vec {
+public abstract class Vec<T extends Vec<?>> {
 	
 	public abstract double get(int i);
 	
@@ -28,7 +28,7 @@ public abstract class Vec {
 	/**
 	 * deep copy
 	 */
-	public abstract Vec clone();
+	public abstract T clone();
 	
 	/* everything below here has an implementation based on stuff above here
 	   you can always override the definitions below with more efficient versions */
@@ -49,6 +49,22 @@ public abstract class Vec {
 		}
 		return false;
 	}
+	
+	/**
+	 * this += scale * other
+	 */
+	public void add(Vec<?> other, double scale) {
+		Iterator<IndexValue> iter = nonZero();
+		while(iter.hasNext()) {
+			IndexValue iv = iter.next();
+			add(iv.index, scale * iv.value);
+		}
+	}
+	
+	/**
+	 * this += other
+	 */
+	public void add(Vec<?> other) { add(other, 1d); }
 	
 	public int l0Norm() {
 		int nz = 0;

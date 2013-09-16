@@ -4,6 +4,8 @@ import java.util.*;
 import junit.framework.Assert;
 import org.junit.Test;
 
+import travis.util.BitHacks;
+
 public class VectorTest {
 	
 	// increase for longer runtimes and more thorough stochastic tests
@@ -19,9 +21,9 @@ public class VectorTest {
 			
 			int tag = rand.nextInt(k);
 			int idx = rand.nextInt(k);
-			long packed = Vector.pack(tag, idx);
-			int unpackedTag = Vector.unpackTag(packed);
-			int unpackedIdx = Vector.unpackIndex(packed);
+			long packed = BitHacks.pack(tag, idx);
+			int unpackedTag = BitHacks.unpackTag(packed);
+			int unpackedIdx = BitHacks.unpackIndex(packed);
 			
 			//System.out.printf("tag=%s idx=%s packed=%s unpackedTag=%s unpackedIdx=%s\n",
 			//		Integer.toBinaryString(tag), Integer.toBinaryString(idx), Long.toBinaryString(packed),

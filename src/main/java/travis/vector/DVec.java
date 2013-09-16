@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 import travis.util.IndexValue;
 
-public class DVec extends Vec {
+public class DVec extends Vec<DVec> {
 	
 	private double[] values;
 	
@@ -63,7 +63,7 @@ public class DVec extends Vec {
 	}
 
 	@Override
-	public Vec clone() {
+	public DVec clone() {
 		return new DVec(Arrays.copyOf(values, values.length));
 	}
 }
