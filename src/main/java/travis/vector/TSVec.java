@@ -12,13 +12,27 @@ import travis.util.TaggedIndexValue;
  * SVec with "tags"
  * indices are no longer ints, but 2 ints (or a long)
  * can also be used as a matrix
+ * 
+ * how to handle this class...
+ * i know its very useful, its common to do feature indexing with 2 (or more)
+ * int keys (e.g. bigrams).
+ * but, these keys are not comparable with that from a DVec, which breaks Vec
+ * 
+ * in general, (int,int) or long keys will never be comparable with DVec keys
+ * (because you can't allocate an array that big). 2^31 gets you ~2 billion keys
+ * if they're doubles, thats 16 GB of weights...
+ * 
+ * fundamentally, it eventually needs to get boiled down to a SVec if we are going
+ * to match this up with a DVec for weights
+ * 
+ * TODO remove this from the Vec class/interface
  */
 public class TSVec extends Vec<TSVec> {
 	
 	public static final int DEFAULT_CAPACITY = 16;
 	
-	private int[] tags;
-	private int[] indices;
+	private int[] tags;		// aka rows
+	private int[] indices;	// aka cols
 	private double[] values;
 	private int top;
 	private boolean compacted;
