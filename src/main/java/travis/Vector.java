@@ -184,8 +184,11 @@ public class Vector {
 	/**
 	 * sort indices and consolidate duplicate entries (only for sparse vectors)
 	 * @param freeExtraMem will allocate new arrays as small as possible to store tags/indices/values
+	 * 
+	 * this method is protected, not private, so that sub-classes that want to observe inefficient
+	 * operations can override, observe, and forward back this method.
 	 */
-	private void compact(boolean freeExtraMem) {			assert isSparse();
+	protected void compact(boolean freeExtraMem) {			assert isSparse();
 	
 		if(compacted) return;
 		
@@ -220,7 +223,7 @@ public class Vector {
 		compacted = true;
 	}
 	
-	private void compact() { compact(false); }
+	protected void compact() { compact(false); }
 	
 	/**
 	 * sets this vector to the 0 vector
