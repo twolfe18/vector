@@ -53,14 +53,15 @@ public class Vector {
 	//		(this will need to inspect things like int[] idx, experiment with how to do this efficiently and safely)
 	
 	
-	private double[] vals;
+	protected double[] vals;
 	
 	// sparse only
-	private int[] tags;
-	private int[] idx;
-	private int top;	// indices less than this are valid
-	private boolean compacted;
-	private int capacity() {
+	protected int[] tags;
+	protected int[] idx;
+	protected int top;	// indices less than this are valid
+	protected boolean compacted;
+	
+	protected int capacity() {
 		assert tags == null || tags.length == idx.length;
 		return idx.length;
 	}
@@ -72,6 +73,14 @@ public class Vector {
 	 */
 	public Vector(int dimension) {
 		vals = new double[dimension];
+		top = -1;
+	}
+	
+	/**
+	 * Dense constructor
+	 */
+	public Vector(double[] values) {
+		vals = values;
 		top = -1;
 	}
 	

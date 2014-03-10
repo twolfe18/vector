@@ -17,6 +17,11 @@
       <version>4.8.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>edu.jhu.pacaya</groupId>
+      <artifactId>pacaya</artifactId>
+      <version>1.0.2-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>
