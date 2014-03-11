@@ -2,6 +2,7 @@ package travis;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeMap;
 
 import travis.util.BitHacks;
@@ -44,15 +45,7 @@ import travis.util.BitHacks;
 public class Vector {
 	
 	// TODO add ability to be a binary vector (with no support for tags)
-	
-	// TODO
-	// 1) constructors that take arrays
-	// 2) split into Vector interface and SVec, DVec that implement them
-	// 3) BVec can also implement Vector based on a bitset
-	// 4) have a static class that implements binary operators efficiently
-	//		(this will need to inspect things like int[] idx, experiment with how to do this efficiently and safely)
-	
-	
+
 	protected double[] vals;
 	
 	// sparse only
@@ -93,6 +86,28 @@ public class Vector {
 		Vector v = new Vector(times);
 		Arrays.fill(v.vals, value);
 		return v;
+	}
+	
+	/**
+	 * Sparse constructor
+	 */
+	public Vector(int[] idx, double[] values) {
+		this(null, idx, values);
+	}
+	
+	/**
+	 * Sparse constructor
+	 */
+	public Vector(int[] tags, int[] idx, double[] values) {
+		if(idx.length != values.length)
+			throw new IllegalArgumentException();
+		if(tags != null && tags.length != idx.length)
+			throw new IllegalArgumentException();
+		this.tags = tags;
+		this.idx = idx;
+		this.vals = values;
+		this.top = idx.length;
+		this.compacted = false;
 	}
 	
 	/**
@@ -188,7 +203,7 @@ public class Vector {
 	 * this method is protected, not private, so that sub-classes that want to observe inefficient
 	 * operations can override, observe, and forward back this method.
 	 */
-	protected void compact(boolean freeExtraMem) {			assert isSparse();
+	public void compact(boolean freeExtraMem) {			assert isSparse();
 	
 		if(compacted) return;
 		
@@ -223,7 +238,7 @@ public class Vector {
 		compacted = true;
 	}
 	
-	protected void compact() { compact(false); }
+	public void compact() { compact(false); }
 	
 	/**
 	 * sets this vector to the 0 vector
@@ -611,7 +626,8 @@ public class Vector {
 		}
 	}
 	
-	private class DenseIdxIter implements Iterator<Integer> {
+	
+	public static class DenseIdxIter implements Iterator<Integer> {
 		private int dim, cur = 0;
 		public DenseIdxIter(int dimension) { dim = dimension; }
 		@Override
@@ -622,7 +638,7 @@ public class Vector {
 		public void remove() { throw new UnsupportedOperationException(); }
 	}
 	
-	private class SparseIdxIter implements Iterator<Integer> {
+	public static class SparseIdxIter implements Iterator<Integer> {
 		private int i = 0, top;
 		private int[] idx;
 		public SparseIdxIter(int[] idx, int top) {
@@ -642,6 +658,58 @@ public class Vector {
 		if(isSparse()) return new SparseIdxIter(idx, top);
 		else return new DenseIdxIter(vals.length);
 	}
+	
+	
+	public static class IntDouble implements Map.Entry<Integer, Double> {
+		public int index;
+		public double value;
+		public IntDouble(int index, double value) {
+			this.index = index;
+			this.value = value;
+		}
+		@Override
+		public Integer getKey() { return index; }
+		@Override
+		public Double getValue() { return value; }
+		@Override
+		public Double setValue(Double value) {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	public static class IdxValIter implements Iterator<IntDouble> {
+		private int i = 0, top;
+		private int[] idx;
+		private double[] vals;
+		/** sparse */
+		public IdxValIter(int[] idx, double[] vals, int top) {
+			this.idx = idx;
+			this.top = top;
+			this.vals = vals;
+		}
+		/** dense */
+		public IdxValIter(double[] vals) {
+			this(null, vals, vals.length);
+		}
+		@Override
+		public boolean hasNext() { return i < top; }
+		@Override
+		public IntDouble next() {
+			int index = idx == null ? i : idx[i];
+			IntDouble iv = new IntDouble(index, vals[i]);
+			i++;
+			return iv;
+		}
+		@Override
+		public void remove() { throw new UnsupportedOperationException(); }
+	}
+	
+	public Iterator<IntDouble> indicesAndValues() {
+		if(isTagged()) throw new RuntimeException();
+		if(isSparse()) return new IdxValIter(idx, vals, top);
+		else return new IdxValIter(vals);
+	}
+	
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
