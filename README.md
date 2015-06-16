@@ -1,3 +1,10 @@
+
+Note:
+------
+This package now serves as the sparse vector implementation in [prim](https://github.com/mgormley/prim),
+which should be preferred over this code, which will not be maintained.
+
+
 vector
 ======
 
